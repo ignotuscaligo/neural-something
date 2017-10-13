@@ -67,8 +67,11 @@ if __name__ == "__main__":
         #print("Predicted output: {0} ({1})".format(
         #        predicted_output, output_error))
 
-        # steps through entire network
-        output_layer.backward_propagate_error(output_error)
+        output_layer.clear_node_error()
+        hidden_layer.clear_node_error()
+
+        output_layer.backward()
+        hidden_layer.backward()
 
         #print("Training")
         output_layer.update_weights(learning_rate)

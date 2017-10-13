@@ -23,6 +23,7 @@ class Perceptron:
         self.value = 0.0
         self.slope = 0.0
         self.delta = 0.0
+        self.error = 0.0
 
     def forward(self):
         self.value = self.bias
@@ -32,12 +33,12 @@ class Perceptron:
 
         self.value = sigmoid(self.value)
 
-    def backward_propagate_error(self, error):
+    def backward(self):
         self.slope = derivative_sigmoid(self.value)
-        self.delta = self.slope * error
+        self.delta = self.slope * self.error
 
         for connection in self.connections:
-            connection.source.backward_propagate_error(self.delta * connection.weight)
+            connection.source.error += self.delta * connection.weight
 
     def update_weights(self, delta_sum, learning_rate):
         for connection in self.connections:
@@ -80,9 +81,13 @@ class Layer:
         for node in self.nodes:
             node.forward()
 
-    def backward_propagate_error(self, error):
+    def backward(self):
         for node in self.nodes:
-            node.backward_propagate_error(error)
+            node.backward()
+
+    def clear_node_error(self):
+        for node in self.nodes:
+            node.error = 0.0
 
     def update_weights(self, learning_rate):
         delta_sum = 0
