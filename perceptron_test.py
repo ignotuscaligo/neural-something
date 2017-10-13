@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     print("Building network")
     input_count = 3
-    hidden_count = 5
+    hidden_count = 10
     output_count = 1
 
     input_layer = Layer()
@@ -46,13 +46,17 @@ if __name__ == "__main__":
     print("Training network: {0} epochs, {1} learning rate".format(
             epoch_count, learning_rate))
 
+    last_percentage = 0
     for epoch in range(epoch_count):
-        #print("Running epoch #{0}".format(epoch + 1))
+        percentage = (epoch * 100) / epoch_count
+
+        if percentage != last_percentage and percentage % 10 == 0:
+            print("{0}% complete".format(percentage))
+
+        last_percentage = percentage
 
         inputs = [random(), random(), random()]
         expected_output = (1.0 - inputs[0]) * (inputs[1]) * (1.0 - inputs[2])
-
-        #print("Input / Expected Output: {0} / {1}".format(inputs, expected_output))
 
         input_layer.nodes[0].value = inputs[0]
         input_layer.nodes[1].value = inputs[1]
@@ -62,21 +66,14 @@ if __name__ == "__main__":
         output_layer.forward()
 
         predicted_output = output_layer.nodes[0].value
-        output_error = expected_output - predicted_output
+        errors = [expected_output - predicted_output]
 
-        #print("Predicted output: {0} ({1})".format(
-        #        predicted_output, output_error))
-
-        # steps through entire network
-        output_layer.backward_propagate_error(output_error)
-
-        #print("Training")
-        output_layer.update_weights(learning_rate)
-        hidden_layer.update_weights(learning_rate)
-
+        output_layer.backward(errors, learning_rate)
     
-    test_count = 100
+    test_count = 1000
     average_error = 0
+    max_error = 0.0
+    min_error = 1.0
 
     print("Testing network")
     for test in range(test_count):
@@ -97,12 +94,16 @@ if __name__ == "__main__":
         predicted_output = output_layer.nodes[0].value
         output_error = expected_output - predicted_output
 
-        print("Predicted / Expected output: {0} / {1} ({2})".format(
-                predicted_output, expected_output, output_error))
+        if test % 100 == 0:
+            print("Predicted / Expected output: {0} / {1} ({2})".format(
+                    predicted_output, expected_output, output_error))
 
-        average_error += output_error
+        average_error += abs(output_error)
+        max_error = max(max_error, abs(output_error))
+        min_error = min(min_error, abs(output_error))
 
     average_error /= (test_count * 1.0)
+    print("Min / Max error: {0} / {1}".format(min_error, max_error))
     print("Average error on test: {0}".format(average_error))
 
     print("Goodbye!")

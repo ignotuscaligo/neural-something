@@ -1,0 +1,10 @@
+layers create and contain nodes
+
+
+
+node - connection -> node
+
+each connection has a source, destination, and weight
+nodes accummulate upstream inputs
+nodes accummulate downstream errors
+

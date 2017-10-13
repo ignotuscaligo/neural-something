@@ -21,8 +21,8 @@ class Perceptron:
         self.connections = []
         self.bias = 0.0
         self.value = 0.0
-        self.slope = 0.0
         self.delta = 0.0
+        self.delta_sum = 0.0
 
     def forward(self):
         self.value = self.bias
@@ -31,18 +31,17 @@ class Perceptron:
             self.value += connection.get_value()
 
         self.value = sigmoid(self.value)
+        self.delta_sum = 0.0
 
-    def backward_propagate_error(self, error):
-        self.slope = derivative_sigmoid(self.value)
-        self.delta = self.slope * error
+    def backward(self, error, learning_rate):
+        delta = derivative_sigmoid(self.value) * error
+        self.delta_sum += delta
 
         for connection in self.connections:
-            connection.source.backward_propagate_error(self.delta * connection.weight)
+            connection.source.backward(delta * connection.weight, learning_rate)
+            connection.weight += delta * connection.source.value * learning_rate
 
-    def update_weights(self, delta_sum, learning_rate):
-        for connection in self.connections:
-            connection.weight += self.delta * connection.source.value * learning_rate
-
+    def update_bias(self, delta_sum, learning_rate):
         self.bias += delta_sum * learning_rate
 
     def add_connection_from(self, other):
@@ -70,28 +69,23 @@ class Layer:
     def connect_nodes_from_layer(self, layer):
         for node in self.nodes:
             for other_node in layer.nodes:
-                print("Connecting node {0}:{1} to {2}:{3}".format(
-                        layer.index, other_node.index,
-                        self.index, node.index))
-
                 node.add_connection_from(other_node)
 
     def forward(self):
         for node in self.nodes:
             node.forward()
 
-    def backward_propagate_error(self, error):
-        for node in self.nodes:
-            node.backward_propagate_error(error)
+    def backward(self, errors, learning_rate):
+        if len(errors) != len(self.nodes):
+            return
 
-    def update_weights(self, learning_rate):
         delta_sum = 0
+        for i in range(len(self.nodes)):
+            self.nodes[i].backward(errors[i], learning_rate)
+            delta_sum += self.nodes[i].delta_sum
 
         for node in self.nodes:
-            delta_sum += node.delta
-
-        for node in self.nodes:
-            node.update_weights(delta_sum, learning_rate)
+            node.update_bias(delta_sum, learning_rate)
 
     def randomize_weights(self):
         for node in self.nodes:
